@@ -33,20 +33,60 @@ Licensed under the [MIT License](LICENSE). Original copyright notices are preser
 - Visual Studio Code or Cursor running in Remote-SSH mode
 - Remote files accessible from Windows via a network share (UNC) or mapped drive (e.g. `K:`)
 
+## Install on Local (not Remote)
+
+This extension **must be installed on the IDE Local side** (your Windows machine running Cursor or VS Code). It cannot run on the SSH remote host.
+
+This is by design. The extension is declared as a **UI extension** (`extensionKind: ["ui"]` in `package.json`), so it always runs locally and talks to the remote workspace over Remote-SSH.
+
+| Install target | Works? | Why |
+|----------------|--------|-----|
+| **Local** (Windows Cursor / VS Code) | Yes | `explorer.exe`, `K:`, and UNC paths exist on Windows |
+| **SSH remote** (Linux host) | No | Remote Linux has no Windows File Explorer or mapped drives |
+
+`settings.json` entries for `remote-ssh-reveal-explorer.*` also belong in **Local User Settings**, for example:
+
+`%APPDATA%\Cursor\User\settings.json`
+
+### How it works
+
+```
+Cursor (Windows Local)                 SSH remote (Linux)
+       |                                       |
+       |  Right-click /home/user/foo.txt       |
+       |  (remote path sent to Local ext)      |
+       |                                       |
+       +- extension maps to K:\foo.txt         |
+       +- Local explorer.exe opens             |
+```
+
+1. You edit files over Remote-SSH in Cursor.
+2. The extension receives the remote Unix path from the IDE.
+3. It translates the path using `networkPath` and `pathPrefixToStrip`.
+4. It launches **local** Windows File Explorer on your PC.
+
+### Verify install location
+
+1. Open Extensions (`Ctrl+Shift+X`).
+2. In the dropdown at the top, select **Local**.
+3. Install or confirm the extension is listed under **Local**, not under `SSH: ...`.
+
+When installing from the command line, run `cursor --install-extension ...` from a **normal user** Windows command prompt on your PC, not on the remote server.
+
 ## Configuration
 
 1. **Connect via Remote-SSH** in VS Code or Cursor.
 2. Set `remote-ssh-reveal-explorer.networkPath` to your Windows path prefix, for example:
-   - UNC: `\\192.168.222.250\ihung`
+   - UNC: `\\192.168.XXX.YYY\<YOUR_USER_NAME>`
    - Mapped drive: `K:`
-3. Set `remote-ssh-reveal-explorer.pathPrefixToStrip` to the remote path prefix to remove, for example: `/home/ihung`
+3. Set `remote-ssh-reveal-explorer.pathPrefixToStrip` to the remote path prefix to remove, for example: `/home/<YOUR_USER_NAME>`
 
 Example `settings.json`:
 
 ```json
 {
   "remote-ssh-reveal-explorer.networkPath": "K:",
-  "remote-ssh-reveal-explorer.pathPrefixToStrip": "/home/ihung"
+  "remote-ssh-reveal-explorer.pathPrefixToStrip": "/home/<YOUR_USER_NAME>"
 }
 ```
 
@@ -54,8 +94,8 @@ Or with UNC:
 
 ```json
 {
-  "remote-ssh-reveal-explorer.networkPath": "\\\\192.168.222.250\\ihung",
-  "remote-ssh-reveal-explorer.pathPrefixToStrip": "/home/ihung"
+  "remote-ssh-reveal-explorer.networkPath": "\\\\192.168.XXX.YYY\\<YOUR_USER_NAME>",
+  "remote-ssh-reveal-explorer.pathPrefixToStrip": "/home/<YOUR_USER_NAME>"
 }
 ```
 
@@ -74,7 +114,7 @@ Or with UNC:
 
 ## Install from VSIX
 
-This fork is not published on the VS Code Marketplace. Build or download a `.vsix` and install locally:
+This fork is not published on the VS Code Marketplace. Build or download a `.vsix` and install on the **Local** IDE (see [Install on Local (not Remote)](#install-on-local-not-remote)):
 
 ```cmd
 cursor --install-extension path\to\ihung-remote-ssh-reveal-explorer-1.2.4.vsix
@@ -102,6 +142,8 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 ## Authors
 
 **ivor911 / ihung** (fork maintainer)
+- GitHub: [@ivor911](https://github.com/ivor911)
+- Upstream: [ihung-remote-ssh-reveal-explorer](https://github.com/ivor911/ihung-remote-ssh-reveal-explorer)
 
 **Sebastien Baillou** (upstream Remote-SSH extension)
 - GitHub: [@sbaillou](https://github.com/sbaillou)
