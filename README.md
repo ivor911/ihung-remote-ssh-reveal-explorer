@@ -114,7 +114,7 @@ Or with UNC:
 
 ## Install from VSIX
 
-This fork is not published on the VS Code Marketplace. Build or download a `.vsix` and install on the **Local** IDE (see [Install on Local (not Remote)](#install-on-local-not-remote)):
+This fork is not published on the VS Code Marketplace. Download a `.vsix` from [GitHub Releases](https://github.com/ivor911/ihung-remote-ssh-reveal-explorer/releases) and install on the **Local** IDE (see [Install on Local (not Remote)](#install-on-local-not-remote)):
 
 ```cmd
 cursor --install-extension path\to\ihung-remote-ssh-reveal-explorer-1.2.4.vsix
@@ -123,6 +123,23 @@ cursor --install-extension path\to\ihung-remote-ssh-reveal-explorer-1.2.4.vsix
 Then run **Developer: Reload Window** from the Command Palette.
 
 > Use a normal user command prompt, not an elevated (Administrator) prompt, if you rely on mapped network drives such as `K:`.
+
+## Releasing
+
+Tagged releases are built automatically by GitHub Actions (`.github/workflows/release.yml`).
+
+1. Bump `version` in `package.json`.
+2. Commit and push to `main`.
+3. Create and push a matching tag:
+
+```bash
+git tag v1.2.4
+git push origin v1.2.4
+```
+
+4. GitHub Actions will compile, package the `.vsix`, and publish a [GitHub Release](https://github.com/ivor911/ihung-remote-ssh-reveal-explorer/releases) with the file attached.
+
+The tag must match `package.json` (for example, tag `v1.2.4` requires `"version": "1.2.4"`).
 
 ## Development
 
