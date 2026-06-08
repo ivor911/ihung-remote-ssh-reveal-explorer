@@ -2,7 +2,7 @@
   "name": "ihung-remote-ssh-reveal-explorer",
   "displayName": "Remote-SSH Reveal in File Explorer (ihung)",
   "description": "Open Windows File Explorer from Remote-SSH. Directories open inside the folder; files are selected with explorer /select.",
-  "version": "1.2.5",
+  "version": "1.2.6",
   "icon": "assets/imgs/logo.png",
   "author": {
     "name": "ihung (ivor911)"
@@ -27,7 +27,7 @@
     "cursor"
   ],
   "engines": {
-    "vscode": "^1.74.0"
+    "vscode": "^1.75.0"
   },
   "type": "module",
   "categories": [
@@ -35,9 +35,6 @@
   ],
   "extensionKind": [
     "ui"
-  ],
-  "activationEvents": [
-    "onCommand:remote-ssh-reveal-explorer.revealInExplorer"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -86,20 +83,7 @@
           "scope": "window"
         }
       }
-    },
-    "keybindings": [
-      {
-        "key": "shift+alt+r",
-        "command": "remote-ssh-reveal-explorer.revealInExplorer",
-        "when": "editorTextFocus && remoteName == 'ssh-remote' && isWindows"
-      },
-      {
-        "key": "shift+alt+r",
-        "command": "remote-ssh-reveal-explorer.revealInExplorer",
-        "when": "filesExplorerFocus && !editorTextFocus && remoteName == 'ssh-remote' && isWindows",
-        "args": "${resource}"
-      }
-    ]
+    }
   },
   "scripts": {
     "test": "npm run compile && node --test test/pathUtils.test.mjs",
@@ -109,7 +93,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.1.0",
-    "@types/vscode": "^1.74.0",
+    "@types/vscode": "^1.75.0",
     "typescript": "^5.0.0"
   }
 }
