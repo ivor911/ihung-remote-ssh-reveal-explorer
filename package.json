@@ -1,30 +1,30 @@
 {
-  "name": "remote-ssh-reveal-explorer",
-  "displayName": "Remote-SSH Reveal in File Explorer",
-  "description": "Seamlessly open Windows File Explorer from Remote-SSH. Right-click any file or folder to reveal it in Windows Explorer.",
-  "version": "1.2.2",
+  "name": "ihung-remote-ssh-reveal-explorer",
+  "displayName": "Remote-SSH Reveal in File Explorer (ihung)",
+  "description": "Open Windows File Explorer from Remote-SSH. Directories open inside the folder; files are selected with explorer /select.",
+  "version": "1.2.4",
   "icon": "assets/imgs/logo.png",
   "author": {
-    "name": "Sébastien Baillou",
-    "url": "https://marketplace.visualstudio.com/publishers/sbaillou"
+    "name": "ihung (ivor911)"
   },
-  "publisher": "sbaillou",
+  "publisher": "ivor911",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sbaillou/vscode-remote-ssh-reveal-explorer"
+    "url": "https://github.com/ivor911/ihung-remote-ssh-reveal-explorer"
   },
   "bugs": {
-    "url": "https://github.com/sbaillou/vscode-remote-ssh-reveal-explorer/issues"
+    "url": "https://github.com/ivor911/ihung-remote-ssh-reveal-explorer/issues"
   },
-  "homepage": "https://github.com/sbaillou/vscode-remote-ssh-reveal-explorer#readme",
+  "homepage": "https://github.com/ivor911/ihung-remote-ssh-reveal-explorer#readme",
   "keywords": [
     "remote-ssh",
     "windows",
     "explorer",
     "file manager",
     "reveal",
-    "context menu"
+    "context menu",
+    "cursor"
   ],
   "engines": {
     "vscode": "^1.74.0"
@@ -74,13 +74,13 @@
         "remote-ssh-reveal-explorer.networkPath": {
           "type": "string",
           "default": "",
-          "description": "Path to the network folder of the Remote-SSH machine.",
+          "description": "Path to the network folder of the Remote-SSH machine (UNC or mapped drive, e.g. \\\\host\\share or K:).",
           "scope": "window"
         },
         "remote-ssh-reveal-explorer.pathPrefixToStrip": {
           "type": "string",
           "default": "",
-          "description": "Prefix to strip from the remote path.",
+          "description": "Prefix to strip from the remote path (e.g. /home/username).",
           "scope": "window"
         }
       }
@@ -96,15 +96,12 @@
   "scripts": {
     "test": "echo \"No tests specified\"",
     "compile": "tsc -p ./",
-    "build": "vcse build",
+    "build": "vsce build",
     "package": "vsce package"
   },
   "devDependencies": {
     "@types/node": "^24.1.0",
-    "@types/vscode": "^1.74.0"
-  },
-  "dependencies": {
-    "open": "^10.2.0",
-    "path": "^0.12.7"
+    "@types/vscode": "^1.74.0",
+    "typescript": "^5.0.0"
   }
 }
