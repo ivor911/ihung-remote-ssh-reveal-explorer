@@ -14,6 +14,7 @@ Licensed under the [MIT License](LICENSE). Original copyright notices are preser
 |---------|--------|
 | **1.2.3-dirfix** | Fix right-click on a **directory** opening the parent folder instead of the directory itself. The upstream version always calls `path.dirname()`, which moves one level up for folders. |
 | **1.2.4** | Improve reveal behavior for daily use: **directories** open directly inside the folder; **files** use Windows `explorer /select` to open the parent folder and highlight the file. |
+| **1.2.5** | Fix POSIX path prefix stripping on Windows, validate settings before reveal, improve directory detection and explorer error handling, support Explorer focus with `Shift+Alt+R`, and add unit tests. |
 
 ### Reveal behavior (1.2.4)
 
@@ -86,7 +87,8 @@ Example `settings.json`:
 ```json
 {
   "remote-ssh-reveal-explorer.networkPath": "K:",
-  "remote-ssh-reveal-explorer.pathPrefixToStrip": "/home/<YOUR_USER_NAME>"
+  "remote-ssh-reveal-explorer.pathPrefixToStrip": "/home/<YOUR_USER_NAME>",
+  "remote-ssh-reveal-explorer.showSuccessNotification": false
 }
 ```
 
@@ -109,15 +111,15 @@ Or with UNC:
 
 **2. Keyboard Shortcut:**
 
-1. Press `Shift+Alt+R` when a file is open in the editor.
-2. Windows File Explorer opens and selects that file.
+1. Press `Shift+Alt+R` with a file open in the editor, or with a file or folder selected in the Explorer panel.
+2. Windows File Explorer opens to the expected location (directory inside the folder, file selected in the parent folder).
 
 ## Install from VSIX
 
 This fork is not published on the VS Code Marketplace. Download a `.vsix` from [GitHub Releases](https://github.com/ivor911/ihung-remote-ssh-reveal-explorer/releases) and install on the **Local** IDE (see [Install on Local (not Remote)](#install-on-local-not-remote)):
 
 ```cmd
-cursor --install-extension path\to\ihung-remote-ssh-reveal-explorer-1.2.4.vsix
+cursor --install-extension path\to\ihung-remote-ssh-reveal-explorer-1.2.5.vsix
 ```
 
 Then run **Developer: Reload Window** from the Command Palette.
@@ -133,13 +135,13 @@ Tagged releases are built automatically by GitHub Actions (`.github/workflows/re
 3. Create and push a matching tag:
 
 ```bash
-git tag v1.2.4
-git push origin v1.2.4
+git tag v1.2.5
+git push origin v1.2.5
 ```
 
 4. GitHub Actions will compile, package the `.vsix`, and publish a [GitHub Release](https://github.com/ivor911/ihung-remote-ssh-reveal-explorer/releases) with the file attached.
 
-The tag must match `package.json` (for example, tag `v1.2.4` requires `"version": "1.2.4"`).
+The tag must match `package.json` (for example, tag `v1.2.5` requires `"version": "1.2.5"`).
 
 ## Development
 
@@ -148,6 +150,7 @@ git clone https://github.com/ivor911/ihung-remote-ssh-reveal-explorer.git
 cd ihung-remote-ssh-reveal-explorer
 npm install
 npm run compile
+npm test
 ```
 
 Press `F5` in VS Code / Cursor to run in the Extension Development Host.

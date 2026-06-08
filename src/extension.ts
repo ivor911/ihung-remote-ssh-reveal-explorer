@@ -1,130 +1,173 @@
 import * as vscode from "vscode";
-import { spawn } from "child_process";
-import path from "path";
+import {
+  openInWindowsExplorer,
+  selectInWindowsExplorer,
+  verifyTargetExists,
+} from "./explorer.js";
+import { buildNetworkPath, toWindowsPath } from "./pathUtils.js";
+
+interface RevealConfig {
+  networkPath: string;
+  pathPrefixToStrip: string;
+  showSuccessNotification: boolean;
+}
+
+function getRevealConfig(): RevealConfig | undefined {
+  const config = vscode.workspace.getConfiguration("remote-ssh-reveal-explorer");
+  const networkPath = config.get<string>("networkPath", "").trim();
+  const pathPrefixToStrip = config.get<string>("pathPrefixToStrip", "").trim();
+  const showSuccessNotification = config.get<boolean>("showSuccessNotification", false);
+
+  if (!networkPath) {
+    void vscode.window.showErrorMessage(
+      "remote-ssh-reveal-explorer.networkPath is not configured. Set it in Local User Settings."
+    );
+    return undefined;
+  }
+
+  if (!pathPrefixToStrip) {
+    void vscode.window.showErrorMessage(
+      "remote-ssh-reveal-explorer.pathPrefixToStrip is not configured. Set it in Local User Settings."
+    );
+    return undefined;
+  }
+
+  return { networkPath, pathPrefixToStrip, showSuccessNotification };
+}
+
+function parseCommandUri(
+  arg?: vscode.Uri | string | { uri?: vscode.Uri | string }
+): vscode.Uri | undefined {
+  if (arg instanceof vscode.Uri) {
+    return arg;
+  }
+
+  if (typeof arg === "string") {
+    return vscode.Uri.parse(arg);
+  }
+
+  if (arg && typeof arg === "object" && "uri" in arg && arg.uri) {
+    if (arg.uri instanceof vscode.Uri) {
+      return arg.uri;
+    }
+    if (typeof arg.uri === "string") {
+      return vscode.Uri.parse(arg.uri);
+    }
+  }
+
+  return undefined;
+}
+
+async function getExplorerSelection(): Promise<vscode.Uri[]> {
+  try {
+    const selection = await vscode.commands.executeCommand<vscode.Uri[]>(
+      "_workbench.explorer.getActiveSelection"
+    );
+    return Array.isArray(selection) ? selection : [];
+  } catch {
+    return [];
+  }
+}
+
+async function resolveTargetUri(
+  arg?: vscode.Uri | string | { uri?: vscode.Uri | string }
+): Promise<vscode.Uri | undefined> {
+  const fromArg = parseCommandUri(arg);
+  if (fromArg) {
+    return fromArg;
+  }
+
+  const editor = vscode.window.activeTextEditor;
+  if (editor) {
+    return editor.document.uri;
+  }
+
+  const selection = await getExplorerSelection();
+  return selection[0];
+}
+
+async function resolveIsDirectory(uri: vscode.Uri): Promise<boolean> {
+  try {
+    const stat = await vscode.workspace.fs.stat(uri);
+    if (stat.type === vscode.FileType.Directory) {
+      return true;
+    }
+    if (stat.type === vscode.FileType.File) {
+      return false;
+    }
+  } catch (error) {
+    console.warn("Failed to stat target, trying readDirectory fallback:", error);
+  }
+
+  try {
+    await vscode.workspace.fs.readDirectory(uri);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export function activate(context: vscode.ExtensionContext): void {
-  console.log("Remote-SSH reveal Explorer extension is now active!");
-  console.log("Extension context:", context.extensionPath);
-
   const disposable = vscode.commands.registerCommand(
     "remote-ssh-reveal-explorer.revealInExplorer",
-    async (arg?: vscode.Uri) => {
-      let remotePath: string | undefined;
-      let targetUri: vscode.Uri | undefined;
-
-      if (arg instanceof vscode.Uri) {
-        console.log(`Right-clicked item: ${arg.fsPath}`);
-        remotePath = arg.fsPath;
-        targetUri = arg;
-      } else {
-        const editor = vscode.window.activeTextEditor;
-        if (editor) {
-          const doc = editor.document;
-          console.log(`Shortcut on active file: ${doc.uri.fsPath}`);
-          remotePath = doc.uri.fsPath;
-          targetUri = doc.uri;
-        } else {
-          console.log("No editor is active");
-          vscode.window.showWarningMessage("No file or folder selected.");
-          return;
-        }
+    async (arg?: vscode.Uri | string | { uri?: vscode.Uri | string }) => {
+      if (process.platform !== "win32") {
+        void vscode.window.showErrorMessage(
+          "Remote-SSH Reveal in File Explorer requires a Windows local machine."
+        );
+        return;
       }
 
+      const revealConfig = getRevealConfig();
+      if (!revealConfig) {
+        return;
+      }
+
+      const targetUri = await resolveTargetUri(arg);
+      if (!targetUri) {
+        void vscode.window.showWarningMessage(
+          "No file or folder selected. Right-click a file or folder, focus the Explorer, or open a file in the editor."
+        );
+        return;
+      }
+
+      const remotePath = targetUri.fsPath;
       console.log("Reveal in Explorer command executed with path:", remotePath);
 
-      const localPath = toWindowsPath(networkPath(remotePath));
+      const localPath = toWindowsPath(
+        buildNetworkPath(
+          remotePath,
+          revealConfig.networkPath,
+          revealConfig.pathPrefixToStrip
+        )
+      );
       console.log("Local network path:", localPath);
 
-      let isDirectory = false;
-      if (targetUri) {
-        try {
-          const stat = await vscode.workspace.fs.stat(targetUri);
-          isDirectory = stat.type === vscode.FileType.Directory;
-        } catch (error) {
-          console.warn("Failed to stat target, treating as file:", error);
-        }
-      }
+      const isDirectory = await resolveIsDirectory(targetUri);
 
       try {
+        await verifyTargetExists(localPath, isDirectory);
+
         if (isDirectory) {
           await openInWindowsExplorer(localPath);
         } else {
           await selectInWindowsExplorer(localPath);
         }
-        vscode.window.showInformationMessage(`Revealed: ${localPath}`);
+
+        if (revealConfig.showSuccessNotification) {
+          void vscode.window.showInformationMessage(`Revealed: ${localPath}`);
+        }
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         console.error("Error opening explorer:", error);
-        vscode.window.showErrorMessage(`Failed to reveal: ${localPath}. Error: ${message}`);
+        void vscode.window.showErrorMessage(
+          `Failed to reveal: ${localPath}. Error: ${message}`
+        );
       }
     }
   );
 
-  const testDisposable = vscode.commands.registerCommand(
-    "remote-ssh-reveal-explorer.test",
-    () => {
-      console.log("Test command executed");
-      vscode.window.showInformationMessage("Extension is working!");
-    }
-  );
-
   context.subscriptions.push(disposable);
-  context.subscriptions.push(testDisposable);
-  console.log("Commands registered successfully");
-}
-
-function networkPath(remotePath: string): string {
-  const { platform } = process;
-  const locale = path[platform === "win32" ? "win32" : "posix"];
-
-  const prefixToStrip = vscode.workspace
-    .getConfiguration("remote-ssh-reveal-explorer")
-    .get<string>("pathPrefixToStrip", "");
-  const prefixToStripLocal = prefixToStrip.replace(/[\\/]/g, locale.sep);
-
-  let remotepathWithoutPrefix = remotePath;
-  if (remotePath.startsWith(prefixToStripLocal)) {
-    remotepathWithoutPrefix = remotePath.slice(prefixToStripLocal.length);
-  }
-
-  const networkPathPrefix = vscode.workspace
-    .getConfiguration("remote-ssh-reveal-explorer")
-    .get<string>("networkPath", "");
-
-  return `${networkPathPrefix}${remotepathWithoutPrefix}`;
-}
-
-function toWindowsPath(localPath: string): string {
-  if (process.platform !== "win32") {
-    return localPath;
-  }
-  if (localPath.startsWith("\\\\")) {
-    return "\\\\" + localPath.slice(2).replace(/\//g, "\\");
-  }
-  return localPath.replace(/\//g, "\\");
-}
-
-function spawnExplorer(args: string[]): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const child = spawn("explorer.exe", args, { shell: false });
-    child.on("error", reject);
-    child.on("exit", () => {
-      // explorer.exe often returns non-zero even on success
-      resolve();
-    });
-  });
-}
-
-function openInWindowsExplorer(winPath: string): Promise<void> {
-  const arg = winPath.includes(" ") ? `"${winPath}"` : winPath;
-  return spawnExplorer([arg]);
-}
-
-function selectInWindowsExplorer(winPath: string): Promise<void> {
-  const selectArg = winPath.includes(" ")
-    ? `/select,"${winPath}"`
-    : `/select,${winPath}`;
-  return spawnExplorer([selectArg]);
 }
 
 export function deactivate(): void {}

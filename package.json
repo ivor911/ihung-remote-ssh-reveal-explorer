@@ -2,7 +2,7 @@
   "name": "ihung-remote-ssh-reveal-explorer",
   "displayName": "Remote-SSH Reveal in File Explorer (ihung)",
   "description": "Open Windows File Explorer from Remote-SSH. Directories open inside the folder; files are selected with explorer /select.",
-  "version": "1.2.4",
+  "version": "1.2.5",
   "icon": "assets/imgs/logo.png",
   "author": {
     "name": "ihung (ivor911)"
@@ -37,7 +37,7 @@
     "ui"
   ],
   "activationEvents": [
-    "onStartupFinished"
+    "onCommand:remote-ssh-reveal-explorer.revealInExplorer"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -45,24 +45,20 @@
       {
         "command": "remote-ssh-reveal-explorer.revealInExplorer",
         "title": "Remote-SSH Reveal in File Explorer"
-      },
-      {
-        "command": "remote-ssh-reveal-explorer.test",
-        "title": "Test Remote-SSH Reveal Extension"
       }
     ],
     "menus": {
       "explorer/context": [
         {
           "command": "remote-ssh-reveal-explorer.revealInExplorer",
-          "when": "remoteName == ssh-remote",
+          "when": "remoteName == ssh-remote && isWindows",
           "group": "6_copypath@1000"
         }
       ],
       "editor/title/context": [
         {
           "command": "remote-ssh-reveal-explorer.revealInExplorer",
-          "when": "remoteName == ssh-remote",
+          "when": "remoteName == ssh-remote && isWindows",
           "group": "2_files"
         }
       ]
@@ -82,6 +78,12 @@
           "default": "",
           "description": "Prefix to strip from the remote path (e.g. /home/username).",
           "scope": "window"
+        },
+        "remote-ssh-reveal-explorer.showSuccessNotification": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show an information message after successfully revealing a path in File Explorer.",
+          "scope": "window"
         }
       }
     },
@@ -89,12 +91,18 @@
       {
         "key": "shift+alt+r",
         "command": "remote-ssh-reveal-explorer.revealInExplorer",
-        "when": "editorTextFocus && remoteName == 'ssh-remote'"
+        "when": "editorTextFocus && remoteName == 'ssh-remote' && isWindows"
+      },
+      {
+        "key": "shift+alt+r",
+        "command": "remote-ssh-reveal-explorer.revealInExplorer",
+        "when": "filesExplorerFocus && !editorTextFocus && remoteName == 'ssh-remote' && isWindows",
+        "args": "${resource}"
       }
     ]
   },
   "scripts": {
-    "test": "echo \"No tests specified\"",
+    "test": "npm run compile && node --test test/pathUtils.test.mjs",
     "compile": "tsc -p ./",
     "build": "vsce build",
     "package": "vsce package"
