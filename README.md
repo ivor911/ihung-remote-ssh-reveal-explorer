@@ -81,6 +81,9 @@ When installing from the command line, run `cursor --install-extension ...` from
    - UNC: `\\192.168.XXX.YYY\<YOUR_USER_NAME>`
    - Mapped drive: `K:` (do not add a trailing backslash)
 3. Set `remote-ssh-reveal-explorer.pathPrefixToStrip` to the remote path prefix to remove, for example: `/home/<YOUR_USER_NAME>`. It must match the start of remote paths exactly (case sensitive).
+4. Optionally set `remote-ssh-reveal-explorer.showSuccessNotification` to control feedback after a successful reveal:
+   - `false` (default): open File Explorer silently; errors still show an error message.
+   - `true`: show an information message with the resolved local path (for example `Revealed: K:\project\file.txt`).
 
 Example `settings.json`:
 
@@ -97,7 +100,8 @@ Or with UNC:
 ```json
 {
   "remote-ssh-reveal-explorer.networkPath": "\\\\192.168.XXX.YYY\\<YOUR_USER_NAME>",
-  "remote-ssh-reveal-explorer.pathPrefixToStrip": "/home/<YOUR_USER_NAME>"
+  "remote-ssh-reveal-explorer.pathPrefixToStrip": "/home/<YOUR_USER_NAME>",
+  "remote-ssh-reveal-explorer.showSuccessNotification": false
 }
 ```
 
