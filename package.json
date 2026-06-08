@@ -86,7 +86,7 @@
     }
   },
   "scripts": {
-    "test": "npm run compile && node --test test/pathUtils.test.mjs",
+    "test": "npm run compile && node --test test/*.test.mjs",
     "compile": "tsc -p ./",
     "build": "vsce build",
     "package": "vsce package"
@@ -94,6 +94,7 @@
   "devDependencies": {
     "@types/node": "^24.1.0",
     "@types/vscode": "^1.75.0",
+    "@vscode/vsce": "^3.2.1",
     "typescript": "^5.0.0"
   }
 }

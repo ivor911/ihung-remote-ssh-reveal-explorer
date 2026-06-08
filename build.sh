@@ -1,5 +1,5 @@
 #!/bin/bash
 
-rm -rf vscode-filament-*.vsix
+rm -f ihung-remote-ssh-reveal-explorer-*.vsix
 
 vsce package

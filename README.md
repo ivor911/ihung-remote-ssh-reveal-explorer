@@ -15,7 +15,7 @@ Licensed under the [MIT License](LICENSE). Original copyright notices are preser
 | **1.2.3-dirfix** | Fix right-click on a **directory** opening the parent folder instead of the directory itself. The upstream version always calls `path.dirname()`, which moves one level up for folders. |
 | **1.2.4** | Improve reveal behavior for daily use: **directories** open directly inside the folder; **files** use Windows `explorer /select` to open the parent folder and highlight the file. |
 | **1.2.5** | Fix POSIX path prefix stripping on Windows, validate settings before reveal, improve directory detection and explorer error handling, support Explorer focus with `Shift+Alt+R`, and add unit tests. |
-| **1.2.6** | Same as 1.2.5 but remove `Shift+Alt+R` keybindings so VS Code / Cursor built-in `revealFileInOS` is unchanged. Use the context menu only. |
+| **1.2.6** | Remove `Shift+Alt+R` keybindings so VS Code / Cursor built-in `revealFileInOS` is unchanged (context menu only). Require VS Code / Cursor 1.75+. Validate `pathPrefixToStrip` before reveal, require files to exist locally, normalize `networkPath` trailing slashes, improve symlink handling and `/select` quoting, and add explorer unit tests. |
 
 ### Reveal behavior (1.2.4)
 
@@ -31,7 +31,7 @@ Licensed under the [MIT License](LICENSE). Original copyright notices are preser
 
 ## Prerequisites
 
-- Visual Studio Code or Cursor running in Remote-SSH mode
+- Visual Studio Code or Cursor **1.75 or newer**, running in Remote-SSH mode
 - Remote files accessible from Windows via a network share (UNC) or mapped drive (e.g. `K:`)
 
 ## Install on Local (not Remote)
@@ -79,8 +79,8 @@ When installing from the command line, run `cursor --install-extension ...` from
 1. **Connect via Remote-SSH** in VS Code or Cursor.
 2. Set `remote-ssh-reveal-explorer.networkPath` to your Windows path prefix, for example:
    - UNC: `\\192.168.XXX.YYY\<YOUR_USER_NAME>`
-   - Mapped drive: `K:`
-3. Set `remote-ssh-reveal-explorer.pathPrefixToStrip` to the remote path prefix to remove, for example: `/home/<YOUR_USER_NAME>`
+   - Mapped drive: `K:` (do not add a trailing backslash)
+3. Set `remote-ssh-reveal-explorer.pathPrefixToStrip` to the remote path prefix to remove, for example: `/home/<YOUR_USER_NAME>`. It must match the start of remote paths exactly (case sensitive).
 
 Example `settings.json`:
 

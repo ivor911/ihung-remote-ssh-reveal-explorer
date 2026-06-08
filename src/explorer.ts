@@ -1,5 +1,4 @@
 import { access } from "fs/promises";
-import path from "path";
 import { spawn } from "child_process";
 
 async function pathIsAccessible(targetPath: string): Promise<boolean> {
@@ -22,14 +21,24 @@ export async function verifyTargetExists(
     return;
   }
 
-  if (!isDirectory) {
-    const parent = path.dirname(winPath);
-    if (await pathIsAccessible(parent)) {
-      return;
-    }
+  if (isDirectory) {
+    throw new Error(`Directory does not exist or is not accessible: ${winPath}`);
   }
 
-  throw new Error(`Path does not exist or is not accessible: ${winPath}`);
+  throw new Error(`File does not exist or is not accessible: ${winPath}`);
+}
+
+/**
+ * Build the explorer.exe /select argument for a Windows path.
+ */
+export function buildSelectArg(winPath: string): string {
+  const needsQuotes = /[\s"]/.test(winPath);
+  if (!needsQuotes) {
+    return `/select,${winPath}`;
+  }
+
+  const escaped = winPath.replace(/"/g, '""');
+  return `/select,"${escaped}"`;
 }
 
 function spawnExplorer(args: string[]): Promise<void> {
@@ -37,6 +46,11 @@ function spawnExplorer(args: string[]): Promise<void> {
     const child = spawn("explorer.exe", args, { shell: false });
     child.on("error", reject);
     child.on("spawn", () => resolve());
+    child.on("exit", (code) => {
+      if (code !== null && code !== 0) {
+        console.warn(`explorer.exe exited with code ${code} for args:`, args);
+      }
+    });
   });
 }
 
@@ -45,8 +59,5 @@ export async function openInWindowsExplorer(winPath: string): Promise<void> {
 }
 
 export async function selectInWindowsExplorer(winPath: string): Promise<void> {
-  const selectArg = winPath.includes(" ")
-    ? `/select,"${winPath}"`
-    : `/select,${winPath}`;
-  await spawnExplorer([selectArg]);
+  await spawnExplorer([buildSelectArg(winPath)]);
 }

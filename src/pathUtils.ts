@@ -6,6 +6,21 @@ export function normalizePosixPath(p: string): string {
 }
 
 /**
+ * Return true when the remote path starts with the configured strip prefix.
+ */
+export function remotePathMatchesStripPrefix(
+  remotePath: string,
+  pathPrefixToStrip: string
+): boolean {
+  const normalizedRemote = normalizePosixPath(remotePath);
+  const normalizedPrefix = normalizePosixPath(pathPrefixToStrip).replace(/\/+$/, "");
+  if (!normalizedPrefix) {
+    return true;
+  }
+  return normalizedRemote.startsWith(normalizedPrefix);
+}
+
+/**
  * Map a remote Unix path to a Windows network path prefix.
  */
 export function buildNetworkPath(
@@ -15,6 +30,7 @@ export function buildNetworkPath(
 ): string {
   const normalizedRemote = normalizePosixPath(remotePath);
   const normalizedPrefix = normalizePosixPath(pathPrefixToStrip).replace(/\/+$/, "");
+  const trimmedNetwork = networkPathPrefix.replace(/[\\/]+$/, "");
 
   let remainder = normalizedRemote;
   if (normalizedPrefix && normalizedRemote.startsWith(normalizedPrefix)) {
@@ -24,7 +40,12 @@ export function buildNetworkPath(
     }
   }
 
-  return `${networkPathPrefix}${remainder}`;
+  if (!remainder) {
+    return trimmedNetwork;
+  }
+
+  const suffix = remainder.startsWith("/") ? remainder : `/${remainder}`;
+  return `${trimmedNetwork}${suffix}`;
 }
 
 /**

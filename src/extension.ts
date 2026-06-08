@@ -4,7 +4,11 @@ import {
   selectInWindowsExplorer,
   verifyTargetExists,
 } from "./explorer.js";
-import { buildNetworkPath, toWindowsPath } from "./pathUtils.js";
+import {
+  buildNetworkPath,
+  remotePathMatchesStripPrefix,
+  toWindowsPath,
+} from "./pathUtils.js";
 
 interface RevealConfig {
   networkPath: string;
@@ -58,20 +62,9 @@ function parseCommandUri(
   return undefined;
 }
 
-async function getExplorerSelection(): Promise<vscode.Uri[]> {
-  try {
-    const selection = await vscode.commands.executeCommand<vscode.Uri[]>(
-      "_workbench.explorer.getActiveSelection"
-    );
-    return Array.isArray(selection) ? selection : [];
-  } catch {
-    return [];
-  }
-}
-
-async function resolveTargetUri(
+function resolveTargetUri(
   arg?: vscode.Uri | string | { uri?: vscode.Uri | string }
-): Promise<vscode.Uri | undefined> {
+): vscode.Uri | undefined {
   const fromArg = parseCommandUri(arg);
   if (fromArg) {
     return fromArg;
@@ -82,17 +75,19 @@ async function resolveTargetUri(
     return editor.document.uri;
   }
 
-  const selection = await getExplorerSelection();
-  return selection[0];
+  return undefined;
 }
 
 async function resolveIsDirectory(uri: vscode.Uri): Promise<boolean> {
   try {
     const stat = await vscode.workspace.fs.stat(uri);
-    if (stat.type === vscode.FileType.Directory) {
+    const isDirectory = (stat.type & vscode.FileType.Directory) !== 0;
+    const isFile = (stat.type & vscode.FileType.File) !== 0;
+
+    if (isDirectory && !isFile) {
       return true;
     }
-    if (stat.type === vscode.FileType.File) {
+    if (isFile && !isDirectory) {
       return false;
     }
   } catch (error) {
@@ -118,21 +113,35 @@ export function activate(context: vscode.ExtensionContext): void {
         return;
       }
 
+      if (vscode.env.remoteName !== "ssh-remote") {
+        void vscode.window.showErrorMessage(
+          "Remote-SSH Reveal in File Explorer requires an active Remote-SSH connection."
+        );
+        return;
+      }
+
       const revealConfig = getRevealConfig();
       if (!revealConfig) {
         return;
       }
 
-      const targetUri = await resolveTargetUri(arg);
+      const targetUri = resolveTargetUri(arg);
       if (!targetUri) {
         void vscode.window.showWarningMessage(
-          "No file or folder selected. Right-click a file or folder, focus the Explorer, or open a file in the editor."
+          "No file or folder selected. Right-click a file or folder in the Explorer or editor title bar."
         );
         return;
       }
 
       const remotePath = targetUri.fsPath;
       console.log("Reveal in Explorer command executed with path:", remotePath);
+
+      if (!remotePathMatchesStripPrefix(remotePath, revealConfig.pathPrefixToStrip)) {
+        void vscode.window.showErrorMessage(
+          `Remote path "${remotePath}" does not start with pathPrefixToStrip "${revealConfig.pathPrefixToStrip}". Check Local User Settings.`
+        );
+        return;
+      }
 
       const localPath = toWindowsPath(
         buildNetworkPath(

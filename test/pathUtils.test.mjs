@@ -3,12 +3,43 @@ import assert from "node:assert/strict";
 import {
   buildNetworkPath,
   normalizePosixPath,
+  remotePathMatchesStripPrefix,
   toWindowsPath,
 } from "../out/pathUtils.js";
 
 describe("normalizePosixPath", () => {
   it("converts backslashes to forward slashes", () => {
     assert.equal(normalizePosixPath("\\home\\user\\foo"), "/home/user/foo");
+  });
+});
+
+describe("remotePathMatchesStripPrefix", () => {
+  it("returns true when remote path starts with prefix", () => {
+    assert.equal(
+      remotePathMatchesStripPrefix("/home/user/project/file.txt", "/home/user"),
+      true
+    );
+  });
+
+  it("returns false when prefix does not match", () => {
+    assert.equal(
+      remotePathMatchesStripPrefix("/home/user/file.txt", "/other/prefix"),
+      false
+    );
+  });
+
+  it("matches when remote path uses backslashes", () => {
+    assert.equal(
+      remotePathMatchesStripPrefix("\\home\\user\\file.txt", "/home/user"),
+      true
+    );
+  });
+
+  it("ignores trailing slash on prefix", () => {
+    assert.equal(
+      remotePathMatchesStripPrefix("/home/user/file.txt", "/home/user/"),
+      true
+    );
   });
 });
 
@@ -56,6 +87,24 @@ describe("buildNetworkPath", () => {
       "/home/user"
     );
     assert.equal(result, "K:");
+  });
+
+  it("normalizes trailing slash on network path", () => {
+    const result = buildNetworkPath(
+      "/home/user/project/file.txt",
+      "K:/",
+      "/home/user"
+    );
+    assert.equal(result, "K:/project/file.txt");
+  });
+
+  it("normalizes trailing slash on UNC network path", () => {
+    const result = buildNetworkPath(
+      "/home/user/file.txt",
+      "\\\\host\\share\\",
+      "/home/user"
+    );
+    assert.equal(result, "\\\\host\\share/file.txt");
   });
 });
 
