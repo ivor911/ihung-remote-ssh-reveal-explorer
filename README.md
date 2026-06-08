@@ -17,9 +17,8 @@ Licensed under the [MIT License](LICENSE). Original copyright notices are preser
 | **1.2.5** | Fix POSIX path prefix stripping on Windows, validate settings before reveal, improve directory detection and explorer error handling, support Explorer focus with `Shift+Alt+R`, and add unit tests. |
 | **1.2.6** | Remove `Shift+Alt+R` keybindings so VS Code / Cursor built-in `revealFileInOS` is unchanged (context menu only). Require VS Code / Cursor 1.75+. Validate `pathPrefixToStrip` before reveal, require files to exist locally, normalize `networkPath` trailing slashes, improve symlink handling and `/select` quoting, and add explorer unit tests. |
 
-### Reveal behavior (1.2.4)
-
-| Right-click target | Behavior |
+### Reveal behavior (1.2.3-1.2.6)
+| Right-click target and select 'Remote-SSH Reveal in File Explorer' | Behavior |
 |--------------------|----------|
 | **File** | Open the containing folder and **select** the file |
 | **Directory** | Open **inside** the directory |
