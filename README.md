@@ -18,10 +18,15 @@ Licensed under the [MIT License](LICENSE). Original copyright notices are preser
 | **1.2.6** | Remove `Shift+Alt+R` keybindings so VS Code / Cursor built-in `revealFileInOS` is unchanged (context menu only). Require VS Code / Cursor 1.75+. Validate `pathPrefixToStrip` before reveal, require files to exist locally, normalize `networkPath` trailing slashes, improve symlink handling and `/select` quoting, and add explorer unit tests. |
 
 ### Reveal behavior (1.2.3-1.2.6)
-| Right-click target and select 'Remote-SSH Reveal in File Explorer' | Behavior |
-|--------------------|----------|
+
+Right-click a file or folder and select **Remote-SSH Reveal in File Explorer**:
+
+| Target | Behavior |
+|--------|----------|
 | **File** | Open the containing folder and **select** the file |
 | **Directory** | Open **inside** the directory |
+
+![right-click_screenshot.png](./assets/imgs/right-click_screenshot.png "Right-click and select Remote-SSH Reveal in File Explorer")
 
 ## Features
 
